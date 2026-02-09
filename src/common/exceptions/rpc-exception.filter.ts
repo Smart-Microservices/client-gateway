@@ -15,8 +15,6 @@ export class ExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const rpcError: RpcError = exception.getError() as RpcError;
 
-    console.error('RPC Exception caught:', rpcError);
-
     if (
       typeof rpcError === 'object' &&
       rpcError !== null &&
