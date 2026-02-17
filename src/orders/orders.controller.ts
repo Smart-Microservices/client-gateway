@@ -10,7 +10,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { ORDER_SERVICE } from 'src/config/services';
+import { NATS_SERVERS } from 'src/config/services';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { PaginationOrderDto } from './dto/pagination-order.dto';
@@ -18,13 +18,11 @@ import { StatusOrderDto } from './dto/status-order.dto';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    @Inject(ORDER_SERVICE) private readonly orderClient: ClientProxy,
-  ) {}
+  constructor(@Inject(NATS_SERVERS) private readonly client: ClientProxy) {}
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderClient.send({ cmd: 'create_order' }, createOrderDto).pipe(
+    return this.client.send({ cmd: 'create_order' }, createOrderDto).pipe(
       catchError((error) => {
         throw new RpcException(error as object);
       }),
@@ -33,7 +31,7 @@ export class OrdersController {
 
   @Get()
   findAll(@Query() paginationOrderDto: PaginationOrderDto) {
-    return this.orderClient
+    return this.client
       .send({ cmd: 'find_all_orders' }, paginationOrderDto)
       .pipe(
         catchError((error) => {
@@ -44,7 +42,7 @@ export class OrdersController {
 
   @Get('id/:id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.orderClient.send({ cmd: 'find_one_order_by_id' }, { id }).pipe(
+    return this.client.send({ cmd: 'find_one_order_by_id' }, { id }).pipe(
       catchError((error) => {
         throw new RpcException(error as object);
       }),
@@ -56,7 +54,7 @@ export class OrdersController {
     @Query() paginationOrderDto: PaginationOrderDto,
     @Param() statusOrderDto: StatusOrderDto,
   ) {
-    return this.orderClient
+    return this.client
       .send(
         { cmd: 'find_all_orders' },
         {
@@ -76,7 +74,7 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() statusOrderDto: StatusOrderDto,
   ) {
-    return this.orderClient
+    return this.client
       .send(
         { cmd: 'change_order_status' },
         { id, status: statusOrderDto.status },

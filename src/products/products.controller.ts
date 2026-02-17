@@ -10,7 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PRODUCT_SERVICE } from '../config/services';
+import { NATS_SERVERS } from '../config/services';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -19,30 +19,26 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
-  constructor(
-    @Inject(PRODUCT_SERVICE) private readonly productClient: ClientProxy,
-  ) {}
+  constructor(@Inject(NATS_SERVERS) private readonly client: ClientProxy) {}
 
   @Post()
   create(@Body() createProdductDto: CreateProductDto) {
-    return this.productClient
-      .send({ cmd: 'create_product' }, createProdductDto)
-      .pipe(
-        catchError((error) => {
-          throw new RpcException(error as object);
-        }),
-      );
+    return this.client.send({ cmd: 'create_product' }, createProdductDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error as object);
+      }),
+    );
   }
 
   @Get()
   findAll(@Query() paginationDto: PaginationDto) {
-    return this.productClient.send({ cmd: 'find_all_products' }, paginationDto);
+    return this.client.send({ cmd: 'find_all_products' }, paginationDto);
   }
 
   @Get(':id')
   findOneById(@Param('id') id: string) {
     // Manejo con Observable
-    return this.productClient.send({ cmd: 'find_product_by_id' }, { id }).pipe(
+    return this.client.send({ cmd: 'find_product_by_id' }, { id }).pipe(
       catchError((error) => {
         throw new RpcException(error as object);
       }),
@@ -64,7 +60,7 @@ export class ProductsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductDto: UpdateProductDto,
   ) {
-    return this.productClient
+    return this.client
       .send(
         { cmd: 'update_product' },
         {
@@ -81,7 +77,7 @@ export class ProductsController {
 
   @Delete(':id')
   delete(@Param('id') id: string) {
-    return this.productClient.send({ cmd: 'delete_product' }, { id }).pipe(
+    return this.client.send({ cmd: 'delete_product' }, { id }).pipe(
       catchError((error) => {
         throw new RpcException(error as object);
       }),
